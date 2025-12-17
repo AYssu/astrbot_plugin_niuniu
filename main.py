@@ -328,6 +328,12 @@ class NiuniuPlugin(Star):
 
         is_rushing = user_data.get('is_rushing', False) if user_data else False
 
+        # 处理管理命令（不受开冲状态影响）
+        if msg.startswith("设置牛牛长度") or msg.startswith("设置硬度"):
+            async for result in self._admin_manage(event):
+                yield result
+            return
+        
         # 处理其他命令
         if msg.startswith("开冲"):
             if is_rushing:
