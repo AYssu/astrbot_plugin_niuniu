@@ -954,13 +954,16 @@ class NiuniuPlugin(Star):
             # 先移除@用户部分，再提取数字
             after_cmd = msg.split("设置牛牛长度")[-1]
             # 移除 [At:xxx] 或 @xxx 部分
-            after_cmd = re.sub(r'\[At:\d+\]|@\d+', '', after_cmd)
-            match = re.search(r'([+-]?\d+)', after_cmd)
+            after_cmd = re.sub(r'\[At:\d+\]|@\d+', '', after_cmd).strip()
+            # 提取带符号的数字，确保保留 + 或 -
+            match = re.search(r'([+-])(\d+)', after_cmd)
             if not match:
                 yield event.plain_result("❌ 格式错误，请使用：设置牛牛长度@用户 +100 或 -50")
                 return
             
-            change = int(match.group(1))
+            sign = match.group(1)
+            num = int(match.group(2))
+            change = num if sign == '+' else -num
             old_length = target_data['length']
             new_length = max(1, old_length + change)
             
