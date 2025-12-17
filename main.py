@@ -297,7 +297,7 @@ class NiuniuPlugin(Star):
     # endregion
 
     # region 事件处理
-    niuniu_commands = ["牛牛菜单", "牛牛开", "牛牛关", "注册牛牛", "打胶", "我的牛牛", "比划比划", "牛牛排行"]
+    niuniu_commands = ["牛牛菜单", "牛牛开", "牛牛关", "注册牛牛", "打胶", "我的牛牛", "比划比划", "牛牛排行", "牛牛管理"]
 
     @event_message_type(EventMessageType.GROUP_MESSAGE)
     async def on_group_message(self, event: AstrMessageEvent):
@@ -357,7 +357,8 @@ class NiuniuPlugin(Star):
                 "牛牛排行": self._show_ranking,
                 "牛牛商城": self.shop.show_shop,
                 "牛牛购买": self.shop.handle_buy,
-                "牛牛背包": self.shop.show_items
+                "牛牛背包": self.shop.show_items,
+                "牛牛管理": self._admin_manage
             }
 
             for cmd, handler in handler_map.items():
@@ -915,6 +916,84 @@ class NiuniuPlugin(Star):
             )
 
         yield event.plain_result("\n".join(ranking))
+    async def _admin_manage(self, event):
+        """牛牛管理命令"""
+        group_id = str(event.message_obj.group_id)
+        user_id = str(event.get_sender_id())
+        
+        # 检查是否为管理员
+        if not self.is_admin(user_id):
+            yield event.plain_result("❌ 只有管理员才能使用此指令")
+            return
+        
+        msg = event.message_str.strip()
+        
+        # 解析目标用户
+        target_id = self.parse_at_target(event)
+        if not target_id:
+            yield event.plain_result("❌ 请使用 @用户 来指定目标")
+            return
+        
+        # 获取目标用户数据
+        target_data = self.get_user_data(group_id, target_id)
+        if not target_data:
+            yield event.plain_result("❌ 目标用户未注册牛牛")
+            return
+        
+        target_nickname = target_data.get('nickname', '未知用户')
+        
+        # 处理设置长度命令
+        if "设置牛牛长度" in msg:
+            # 提取数值 如 "设置牛牛长度@xxx +100" 或 "设置牛牛长度@xxx -50"
+            match = re.search(r'([+-]\d+)', msg)
+            if not match:
+                yield event.plain_result("❌ 格式错误，请使用：设置牛牛长度@用户 +100 或 -50")
+                return
+            
+            change = int(match.group(1))
+            old_length = target_data['length']
+            new_length = max(1, old_length + change)
+            
+            self.update_user_data(group_id, target_id, {'length': new_length})
+            
+            result = f"✅ 已设置 {target_nickname} 的牛牛长度\n"
+            result += f"📏 {self.format_length(old_length)} → {self.format_length(new_length)}"
+            yield event.plain_result(result)
+            return
+        
+        # 处理设置硬度命令
+        if "设置硬度" in msg:
+            # 提取数值 如 "设置硬度@xxx 5" 或 "设置硬度@xxx +2"
+            match = re.search(r'([+-]?\d+)', msg.split("设置硬度")[-1])
+            if not match:
+                yield event.plain_result("❌ 格式错误，请使用：设置硬度@用户 5 或 +2")
+                return
+            
+            value_str = match.group(1)
+            value = int(value_str)
+            
+            # 如果是相对值（+/- 开头）
+            if msg.split("设置硬度")[-1].strip()[0] in ['+', '-']:
+                new_hardness = max(1, min(10, target_data['hardness'] + value))
+            else:
+                # 绝对值
+                new_hardness = max(1, min(10, value))
+            
+            old_hardness = target_data['hardness']
+            self.update_user_data(group_id, target_id, {'hardness': new_hardness})
+            
+            result = f"✅ 已设置 {target_nickname} 的硬度\n"
+            result += f"💪 {old_hardness} → {new_hardness}"
+            yield event.plain_result(result)
+            return
+        
+        # 如果没有匹配任何子命令
+        yield event.plain_result("""❌ 牛牛管理命令格式：
+设置牛牛长度@用户 +100（增加100cm）
+设置牛牛长度@用户 -50（减少50cm）
+设置硬度@用户 5（设置为5级）
+设置硬度@用户 +2（增加2级）""")
+
     async def _show_menu(self, event):
         """显示菜单"""
         yield event.plain_result(self.niuniu_texts['menu']['default'])
