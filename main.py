@@ -945,7 +945,7 @@ class NiuniuPlugin(Star):
         # 处理设置长度命令
         if "设置牛牛长度" in msg:
             # 提取数值 如 "设置牛牛长度@xxx +100" 或 "设置牛牛长度@xxx -50"
-            match = re.search(r'([+-]\d+)', msg)
+            match = re.search(r'([+-]?\d+)', msg.split("设置牛牛长度")[-1])
             if not match:
                 yield event.plain_result("❌ 格式错误，请使用：设置牛牛长度@用户 +100 或 -50")
                 return
