@@ -970,7 +970,8 @@ class NiuniuPlugin(Star):
         # 处理设置硬度命令
         if "设置硬度" in msg:
             # 提取数值 如 "设置硬度@xxx 5" 或 "设置硬度@xxx +2"
-            match = re.search(r'([+-]?\d+)', msg.split("设置硬度")[-1])
+            hardness_part = msg.split("设置硬度")[-1].strip()
+            match = re.search(r'([+-]?\d+)', hardness_part)
             if not match:
                 yield event.plain_result("❌ 格式错误，请使用：设置硬度@用户 5 或 +2")
                 return
@@ -979,7 +980,7 @@ class NiuniuPlugin(Star):
             value = int(value_str)
             
             # 如果是相对值（+/- 开头）
-            if msg.split("设置硬度")[-1].strip()[0] in ['+', '-']:
+            if hardness_part and hardness_part[0] in ['+', '-']:
                 new_hardness = max(1, min(10, target_data['hardness'] + value))
             else:
                 # 绝对值
