@@ -601,6 +601,38 @@ class NiuniuPlugin(Star):
         compare_records['count'] = compare_count + 1
         self.update_last_actions(last_actions)
 
+        # 检查对手是否为管理员（管理员特权）
+        if self.is_admin(target_id):
+            # 管理员必胜，普通用户必败
+            loss_percent = random.randint(30, 40)
+            loss = int(user_data['length'] * loss_percent / 100)
+            loss = max(1, loss)
+            
+            old_user_len = user_data['length']
+            new_user_len = max(1, user_data['length'] - loss)
+            
+            self.update_user_data(group_id, user_id, {'length': new_user_len})
+            
+            # 嘲讽语句
+            taunts = [
+                f"💀 {nickname} 敢挑战管理员？太天真了！",
+                f"🤦 {nickname} 不自量力，被管理员 {target_data['nickname']} 完虐！",
+                f"😏 {nickname} 的牛牛在管理员面前不堪一击！",
+                f"👑 管理员 {target_data['nickname']} 轻松击败了 {nickname}！",
+                f"💔 {nickname} 被管理员 {target_data['nickname']} 狠狠教训了一顿！",
+                f"🔥 管理员的力量不是你能抗衡的，{nickname}！"
+            ]
+            
+            result_msg = [
+                "⚔️ 【牛牛对决结果】 ⚔️",
+                random.choice(taunts),
+                f"🗡️ {nickname}: {self.format_length(old_user_len)} → {self.format_length(new_user_len)}",
+                f"🛡️ {target_data['nickname']}: {self.format_length(target_data['length'])} (管理员无敌)",
+                f"📉 {nickname} 被扣除了 {loss}cm 的长度！"
+            ]
+            yield event.plain_result("\n".join(result_msg))
+            return
+
         # 检查是否持有夺心魔蝌蚪罐头
         user_items = self.shop.get_user_items(group_id, user_id)
         if user_items.get("夺心魔蝌蚪罐头", 0) > 0:
