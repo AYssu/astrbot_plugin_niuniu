@@ -951,7 +951,11 @@ class NiuniuPlugin(Star):
         # 处理设置长度命令
         if "设置牛牛长度" in msg:
             # 提取数值 如 "设置牛牛长度@xxx +100" 或 "设置牛牛长度@xxx -50"
-            match = re.search(r'([+-]?\d+)', msg.split("设置牛牛长度")[-1])
+            # 先移除@用户部分，再提取数字
+            after_cmd = msg.split("设置牛牛长度")[-1]
+            # 移除 [At:xxx] 或 @xxx 部分
+            after_cmd = re.sub(r'\[At:\d+\]|@\d+', '', after_cmd)
+            match = re.search(r'([+-]?\d+)', after_cmd)
             if not match:
                 yield event.plain_result("❌ 格式错误，请使用：设置牛牛长度@用户 +100 或 -50")
                 return
@@ -970,7 +974,10 @@ class NiuniuPlugin(Star):
         # 处理设置硬度命令
         if "设置硬度" in msg:
             # 提取数值 如 "设置硬度@xxx 5" 或 "设置硬度@xxx +2"
-            hardness_part = msg.split("设置硬度")[-1].strip()
+            # 先移除@用户部分，再提取数字
+            hardness_part = msg.split("设置硬度")[-1]
+            # 移除 [At:xxx] 或 @xxx 部分
+            hardness_part = re.sub(r'\[At:\d+\]|@\d+', '', hardness_part).strip()
             match = re.search(r'([+-]?\d+)', hardness_part)
             if not match:
                 yield event.plain_result("❌ 格式错误，请使用：设置硬度@用户 5 或 +2")
